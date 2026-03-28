@@ -8,11 +8,9 @@
 import SwiftUI
 import CoreText
 import UIKit
-import UniformTypeIdentifiers
 
 struct FontPicker: View {
     @ObservedObject var mgr: laramgr
-    @State private var showfontimporter: Bool = false
 
     private func applyfont(_ resource: String, label: String) {
         let success = mgr.kfsoverwrite(target: laramgr.fontpath, withBundledFont: resource)
@@ -92,39 +90,24 @@ struct FontPicker: View {
                         Text("Segoe UI")
                             .font(viewfont(resource: "segoeui", size: 17))
                     }
-
-                    Button("Custom Font (TTF)") {
-                        showfontimporter = true
-                    }
                 } header: {
                     Text("Fonts")
                 } footer: {
-                    Text("Currently, only Comic Sans MS and SFUI work")
+                    Text("Fira Sans currently broken. If you want to fix it, create a pull request or something.")
+                }
+                
+                Section {
+                    Text(globallogger.logs.last ?? "No logs yet")
+                        .font(.system(size: 13, design: .monospaced))
+                    
+                    if #unavailable(iOS 18.2) {
+                        Button("Respring") {
+                            mgr.respring()
+                        }
+                    }
                 }
             }
             .navigationTitle("Font Overwrite")
-            .fileImporter(isPresented: $showfontimporter, allowedContentTypes: [UTType(filenameExtension: "ttf")!]) { result in
-                do {
-                    let url = try result.get()
-                    let didAccess = url.startAccessingSecurityScopedResource()
-                    defer {
-                        if didAccess {
-                            url.stopAccessingSecurityScopedResource()
-                        }
-                    }
-                    let tmp = NSTemporaryDirectory() + "custom_font_\(UUID().uuidString).ttf"
-                    try FileManager.default.copyItem(at: url, to: URL(fileURLWithPath: tmp))
-                    let success = laramgr.shared.kfsoverwriteWithPatchedCustomFont(target: laramgr.fontpath, customFontPath: tmp)
-                    try? FileManager.default.removeItem(atPath: tmp)
-                    if success {
-                        laramgr.shared.logmsg("font changed to custom font: \(url.lastPathComponent)")
-                    } else {
-                        laramgr.shared.logmsg("failed to change font to custom font")
-                    }
-                } catch {
-                    laramgr.shared.logmsg("custom font import failed: \(error)")
-                }
-            }
         }
     }
 }

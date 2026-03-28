@@ -4,8 +4,8 @@
 //
 //  Created by ruter on 23.03.26.
 //
+
 import SwiftUI
-import notify
 import UniformTypeIdentifiers
 
 
@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var pid: pid_t = getpid()
     @State private var hasoffsets = haskernproc()
     @State private var showresetalert = false
+    @State private var pacSelfTestResult: Bool? = nil
     
     var body: some View {
         NavigationStack {
@@ -142,8 +143,10 @@ struct ContentView: View {
                     }
                     
                     Section {
-                        Button("Respring") {
-                            notify_post("com.apple.springboard.toggleLockScreen")
+                        if #unavailable(iOS 18.2) {
+                            Button("Respring") {
+                                mgr.respring()
+                            }
                         }
                         
                         Button("Panic!") {
