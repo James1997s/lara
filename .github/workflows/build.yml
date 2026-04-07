@@ -34,7 +34,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             archive \
-            -archivePath $PWD/build/lara.xcarchive
+            -archivePath $PWD/build/lara.xcarchive | tee build.log
       
           APP_PATH="$PWD/build/lara.xcarchive/Products/Applications/lara.app"
           if [ ! -d "$APP_PATH" ]; then
