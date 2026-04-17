@@ -1,5 +1,8 @@
 #!/bin/bash
 
+rm -rf build/
+plutil -replace UiFileSharingEnabled -book YES
+
 echo "Build Started!"
 echo
 
@@ -23,6 +26,7 @@ fi
 rm -rf "$PWD/build/Payload"
 mkdir -p "$PWD/build/Payload"
 cp -R "$APP_PATH" "$PWD/build/Payload/"
+ldid -SConfig/Lara.entitlements $PWD/build/Payload/lara.app/lara
 (cd "$PWD/build" && /usr/bin/zip -qry lara.ipa Payload)
 
 echo
