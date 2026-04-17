@@ -17,9 +17,6 @@ jobs:
           - arch: arm64e
             flag: ""
             suffix: ""
-          - arch: arm64
-            flag: "--arm64"
-            suffix: "-arm64"
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -118,6 +115,5 @@ jobs:
           body: ${{ env.COMMITS }}
           files: |
             dist/lara.ipa
-            dist/lara-arm64.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
