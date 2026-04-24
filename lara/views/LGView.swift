@@ -5,7 +5,7 @@
 //  Created by jurre111 on 24.04.26.
 //
 
-// Most of the code is from Duy's SparseBox
+// Credits to leminlimez and Duy Tran for most of the code
 
 import SwiftUI
 
@@ -13,7 +13,6 @@ struct LGView: View {
     @ObservedObject private var mgr = laramgr.shared
     @State private var gp: NSMutableDictionary
     @State private var status: String?
-    @State private var alert: String?
     @State private var valid: Bool = true
     
     private let path = "/var/Managed Preferences/mobile/.GlobalPreferences.plist"
@@ -93,14 +92,6 @@ struct LGView: View {
             } message: {
                 Text(status ?? "")
             }
-            .alert("Done", isPresented: .constant(alert != nil)) {
-                Button("Cancel") { alert = nil }
-                Button("Respring") {
-                    mgr.respring()
-                }
-            } message: {
-                Text(alert ?? "uhh...")
-            }
             .onAppear(perform: load)
         }
     }
@@ -129,10 +120,14 @@ struct LGView: View {
                 target: path,
                 data: data
             )
-            load()
-            if result.ok && validate(gp) {
-                mgr.logmsg("overwrote GlobalPreferences.plist at \(path)")
-                alert = "Applied plist, respring to see changes."
+            if result.ok {
+                load()
+                if validate(gp) {
+                    mgr.logmsg("overwrote GlobalPreferences.plist at \(path)")
+                    status = "Applied plist, reboot to see changes."
+                } else {
+                    status = "Applied plist but it's invalid. Don't respring and copy backup (lara/Documents/ogGlobalPreferences.plist) to orignal location."
+                }
             } else {
                 status = "overwrite failed: \(result.message)"
             }
