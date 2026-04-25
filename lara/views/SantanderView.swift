@@ -399,7 +399,7 @@ final class SantanderPathListViewController: UITableViewController, UISearchResu
                 let bundlePath = "/private/var/containers/Bundle/Application"
                 let apps = try fm.contentsOfDirectory(atPath: bundlePath)
                 var results: [String:String] = [:]
-                for app in apps {/var
+                for app in apps {
                     let appPath = bundlePath + "/" + app
                     let contents = try fm.contentsOfDirectory(atPath: appPath)
                     for item in contents {
