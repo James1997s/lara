@@ -131,7 +131,6 @@ final class SantanderPathListViewController: UITableViewController, UISearchResu
     private var initialEmptyStateMessage: String?
     private var isSearching = false
     private var displayHiddenFiles = true
-    @AppStorage("selectedFmAppsDisplayMode") private var selectedFmAppsDisplayMode: fmAppsDisplayMode = .appName
     @AppStorage("fmRecursiveSearch") private var fmRecursiveSearch: Bool = false
 
     init(path: SantanderPath, readUsesSBX: Bool, useVFSOverwrite: Bool) {
