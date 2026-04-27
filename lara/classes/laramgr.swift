@@ -451,7 +451,7 @@ final class laramgr: ObservableObject {
         do {
             let fm = FileManager.default
             let dataFolder = "/private/var/mobile/Containers/Data/Application"
-            var bundleIDs = ["com.leemin.Pocket-Poster", "com.apple.PosterBoard"]
+            var bundleIDs = ["com.lemin.Pocket-Poster", "com.apple.PosterBoard"]
             if UIDevice.current.userInterfaceIdiom == .phone {
                 bundleIDs.append("com.apple.CarPlayWallpaper")
             }
