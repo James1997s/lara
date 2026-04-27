@@ -448,39 +448,42 @@ final class laramgr: ObservableObject {
 
     // inspired by nugget from leminlimez
     func PPHelper() -> Bool {
-        let fm = FileManager.default
-        let dataFolder = "/private/var/mobile/Containers/Data/Application"
-        var bundleIDs = ["com.leemin.Pocket-Poster", "com.apple.PosterBoard"]
-        if UIDevice.current.userInterfaceIdiom == .phone {
-            bundleIDs.append("com.apple.CarPlayWallpaper")
-        }
-        let apps = fm.contentsOfDirectory(atPath: dataFolder)
-        var hashes: [String:String] = [:]
-        for app in apps {
-            if let plist = NSDictionary(contentsOf: URL(fileURLWithPath: dataFolder + "/" + app + "/.com.apple.mobile_container_manager.metadata.plist")),
-                let bundleID = plist["MCMMetadataIdentifier"] as? String {
-                if bundleIDs.contains(bundleID) {
-                    hashes[bundleID] = app
+        do {
+            let fm = FileManager.default
+            let dataFolder = "/private/var/mobile/Containers/Data/Application"
+            var bundleIDs = ["com.leemin.Pocket-Poster", "com.apple.PosterBoard"]
+            if UIDevice.current.userInterfaceIdiom == .phone {
+                bundleIDs.append("com.apple.CarPlayWallpaper")
+            }
+
+            let apps = try fm.contentsOfDirectory(atPath: dataFolder)
+            var hashes: [String:String] = [:]
+            for app in apps {
+                if let plist = NSDictionary(contentsOf: URL(fileURLWithPath: dataFolder + "/" + app + "/.com.apple.mobile_container_manager.metadata.plist")),
+                    let bundleID = plist["MCMMetadataIdentifier"] as? String {
+                    if bundleIDs.contains(bundleID) {
+                        hashes[bundleID] = app
+                    }
                 }
             }
-        }
 
-        if let PPHash = hashes["com.leemin.Pocket-Poster"] {
-            hashes["com.leemin.Pocket-Poster"] = nil
-            for bundleID in hashes.keys {
-                let fileName = "Nugget" + bundleID.replacingOccurrences(of: "com.apple.", with: "") + "Hash"
-                let content = hashes[bundleID]!
-                let filePath = dataFolder + "/" + PPHash + "/Documents/" + fileName
-                let fileURL = URL(string: filePath)
-                content.write(to: fileURL, atomically: true, encoding: .utf8)
-                logmsg("Wrote hash \(content) to \(filePath)")
+            if let PPHash = hashes["com.leemin.Pocket-Poster"] {
+                hashes["com.leemin.Pocket-Poster"] = nil
+                for bundleID in hashes.keys {
+                    let fileName = "Nugget" + bundleID.replacingOccurrences(of: "com.apple.", with: "") + "Hash"
+                    let content = hashes[bundleID]!
+                    let filePath = dataFolder + "/" + PPHash + "/Documents/" + fileName
+                    try content.write(to: URL(string: filePath), atomically: true, encoding: .utf8)
+                    logmsg("Wrote hash \(content) to \(filePath)")
+                }
+                return true
+            } else {
+                logmsg("Please install Pocket Poster before using Pocket Poster Helper")
+                return false
             }
-            return true
-        } else {
-            logmsg("Please install Pocket Poster before using Pocket Poster Helper")
-            return false
+        } catch {
+            logmsg("Error with Pocket Poster Helper: \(error.localizedDescription)")
         }
-
     }
     
     @discardableResult
