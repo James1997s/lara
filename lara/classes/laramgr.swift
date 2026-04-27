@@ -483,6 +483,7 @@ final class laramgr: ObservableObject {
             }
         } catch {
             logmsg("Error with Pocket Poster Helper: \(error.localizedDescription)")
+            return false
         }
     }
     
