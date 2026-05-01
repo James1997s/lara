@@ -28,10 +28,8 @@
 
 <p align="center">
   <a href="#support">support</a> •
-  <a href="#compatibility">compatibility</a> •
   <a href="#features">features</a> •
   <a href="#known-issues">known issues</a> •
-  <a href="#installation">installation</a> •
   <a href="#tips">tips</a> •
   <a href="#credits">credits</a>
 </p>
@@ -39,7 +37,7 @@
 >[!NOTE]
 >Lara is still in a super rough state and is undergoing a rewrite. If you are experiencing any issues, it is best to simply wait instead of opening issues or asking for support in the Discord. If you would like to contribute, it is best to wait after the rewrite. We will not be accepting PRs during this time or resolving/responding to any issues. Thank you for your understanding!
 
-## Support Table
+## Support
 | OS Version | Support Status |
 | - | - |
 | iOS 16.0 - iOS 17.0.x | Untested |
