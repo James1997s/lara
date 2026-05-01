@@ -63,9 +63,9 @@ struct EditorView: View {
                 Section {
                     Picker("Dynamic Island", selection: $selectedSubType) {
                         Text("Original (\(String(ogSubType)))").tag(ogSubType)
-                        ForEach(subtypes.keys, id: \.self) { subtype in
-                            Text(subtypes[subtype]).tag(subtype)
-                                .disabled(subtypeDisbled[subtype])
+                        ForEach(Array(subtypes.keys), id: \.self) { subtype in
+                            Text(subtypes[subtype] ?? "??").tag(subtype)
+                                .disabled(subtypeDisabled[subtype] ?? true)
                         }
                     }
                     .pickerStyle(.menu)
