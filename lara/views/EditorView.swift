@@ -22,7 +22,8 @@ struct EditorView: View {
     private let path = "/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist"
     private let ogmgurl: URL
     let os = ProcessInfo().operatingSystemVersion
-    var subtypes = [2556: "14 Pro (2556)", 2796: "14 Pro Max (2796)", 2976: "15 Pro Max (2976)", 2622: "16 Pro (2622)", 2868: "16 Pro Max (2868)", 2436: "X Gestures (2436)"]
+    let subtypes = [2556, 2796, 2976, 2622, 2868, 2436]
+    var subtypeNames = [2556: "14 Pro (2556)", 2796: "14 Pro Max (2796)", 2976: "15 Pro Max (2976)", 2622: "16 Pro (2622)", 2868: "16 Pro Max (2868)", 2436: "X Gestures (2436)"]
     var subtypeDisabled: [Int: Bool] = [:]
 
     init() {
@@ -53,7 +54,7 @@ struct EditorView: View {
         if ogSubType == -1 {
             ogSubType = subType
         }
-        subtypes[ogSubType] = nil
+        subtypes.removeAll { $0 == ogSubType }
         subtypeDisabled = [2556: requiresVersion(16), 2796: requiresVersion(16), 2976: requiresVersion(17), 2622: requiresVersion(18), 2868: requiresVersion(18), 2436: !UIDevice._hasHomeButton()]
     }
 
@@ -66,8 +67,8 @@ struct EditorView: View {
                         Spacer()
                         Menu {
                             Button("Original (\(String(ogSubType)))") { selectedSubType = ogSubType }
-                            ForEach(subtypes.keys.sorted(), id: \.self) { subtype in
-                                Button(subtypes[subtype] ?? "??") { selectedSubType = subtype }
+                            ForEach(subtypes, id: \.self) { subtype in
+                                Button(subtypeNames[subtype] ?? "??") { selectedSubType = subtype }
                                     .disabled(subtypeDisabled[subtype] ?? true)
                             }
                         } label: {
