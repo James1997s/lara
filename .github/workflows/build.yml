@@ -90,16 +90,19 @@ jobs:
           ${COMMITS}
           EOF
 
-      - name: create or update nightly
+      - name: update nightly release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create nightly build/lara.ipa \
+          gh release view nightly >/dev/null 2>&1 || \
+          gh release create nightly \
+            --title "Nightly" \
+            --notes "initial nightly" \
+            --prerelease
+      
+          gh release edit nightly \
             --title "Nightly" \
             --notes-file release_notes.txt \
-            --prerelease \
-          || gh release edit nightly \
-            --title "Nightly" \
-            --notes-file release_notes.txt \
-            --prerelease \
-            --assets build/lara.ipa
+            --prerelease
+      
+          gh release upload nightly build/lara.ipa --clobber
