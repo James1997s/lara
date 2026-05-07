@@ -11,7 +11,7 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     @ObservedObject private var mgr = laramgr.shared
     
-    @State private var hasOffsets: Bool = false
+    @State private var hasoffs: Bool = false
     
     @State private var theaderText: String = "Offsets are missing!"
     @State private var theaderIcon: String = "exclamationmark.triangle.fill"
@@ -28,7 +28,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             List {
-                //DebugSection
+                // DebugSection
                 KRWSection
                 RCSection
                 ActionsSection
@@ -51,7 +51,13 @@ struct ContentView: View {
                 }
             }
             .sheet(isPresented: $showSettings) {
-                SettingsView(mgr: mgr, hasoffsets: $hasOffsets)
+                SettingsView(mgr: mgr, hasoffsets: $hasoffs)
+            }
+            .onAppear {
+                hasoffs = emergencyfixfunctiontobereplacedlateronquestionmark()
+                if hasoffs {
+                    mgr.logmsg("we should have all offsets now?")
+                }
             }
         }
     }
@@ -80,7 +86,7 @@ struct ContentView: View {
     
     private var KRWSection: some View {
         Section(header: HeaderLabel(text: "Kernel Read Write", icon: "wrench.and.screwdriver"), footer: Text(isdebugged() ? "Not available while a debugger is attached." : "Depending on your device configuration, this may not function properly.")) {
-            if hasOffsets {
+            if !hasoffs {
                 PlainAlert(title: "Kernelcache offsets missing!", icon: "exclamationmark.triangle.fill", text: "lara needs to download kernelcache offsets in order for the exploit to function properly. Download them in settings.")
             } else {
                 VStack {
@@ -178,7 +184,6 @@ struct ContentView: View {
             }) {
                 VStack {
                     Button(action: {
-                        mgr.logmsg("T")
                         mgr.rcinit(process: "SpringBoard", migbypass: false) { success in
                             if success {
                                 mgr.logmsg("rc init succeeded!")
