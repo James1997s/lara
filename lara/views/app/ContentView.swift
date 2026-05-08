@@ -119,7 +119,7 @@ struct ContentView: View {
                             } else if mgr.vfsattempted && mgr.vfsfailed || mgr.sbxattempted && mgr.sbxfailed {
                                 ButtonLabel(text: "Failed!", icon: "xmark")
                             } else {
-                                ButtonLabel(text: "Initalize System", icon: "folder")
+                                ButtonLabel(text: "Initialize System", icon: "folder")
                             }
                         }
                         .buttonStyle(TranslucentButtonStyle(color: mgr.vfsattempted && mgr.vfsfailed || mgr.sbxattempted && mgr.sbxfailed ? .red : .purple))
