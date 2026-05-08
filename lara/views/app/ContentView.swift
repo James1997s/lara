@@ -105,7 +105,7 @@ struct ContentView: View {
                         }
                     }
                     .buttonStyle(TranslucentButtonStyle(color: mgr.dsattempted && mgr.dsfailed ? .red : .accentColor))
-                    .disabled(mgr.dsready || mgr.dsrunning)
+                    .disabled(mgr.dsready || mgr.dsrunning || isdebugged())
                     
                     if selectedMethod == .hybrid {
                         Button(action: {
@@ -221,23 +221,35 @@ struct ContentView: View {
     
     private var ActionsSection: some View {
         Section(header: HeaderLabel(text: "Actions", icon: "wrench.and.screwdriver")) {
-            HStack {
-                Button(action: {
-                    mgr.respring()
-                }) {
-                    ButtonLabel(text: "Respring", icon: "goforward")
+            VStack {
+                HStack {
+                    Button(action: {
+                        mgr.respring()
+                    }) {
+                        ButtonLabel(text: "Respring", icon: "goforward")
+                    }
+                    .buttonStyle(TranslucentButtonStyle(color: .orange))
+                    
+                    Button(action: {
+                        mgr.panic()
+                    }) {
+                        ButtonLabel(text: "Panic", icon: "ant")
+                    }
+                    .buttonStyle(TranslucentButtonStyle(color: .purple))
+                    .disabled(!mgr.dsready)
                 }
-                .buttonStyle(TranslucentButtonStyle(color: .orange))
                 
-                Button(action: {
-                    mgr.panic()
-                }) {
-                    ButtonLabel(text: "Panic", icon: "ant")
+                if isdebugged() {
+                    Button {
+                        exit(0)
+                    } label: {
+                        ButtonLabel(text: "Detach Debugger", icon: "xmark")
+                    }
+                    .buttonStyle(TranslucentButtonStyle(color: .red))
                 }
-                .buttonStyle(TranslucentButtonStyle(color: .purple))
-                .disabled(!mgr.dsready)
             }
-            if mgr.dsready {
+            
+            if (mgr.dsready || mgr.sbxready || mgr.vfsready) {
                 NavigationLink("Tools", destination: ToolsView())
             }
         }

@@ -19,8 +19,10 @@ extension UIDocumentPickerViewController {
 @main
 struct lara: App {
     @ObservedObject private var mgr = laramgr.shared
+    @ObservedObject private var iconThemeManager = IconThemeManager.shared
     @Environment(\.scenePhase) private var scenePhase
     @State var showunsupported: Bool = false
+    @State var showt1szb: Bool = false
     @State private var selectedtab: Int = 0
     private let keepalivekey = "keepalive"
     @AppStorage("showfmintabs") private var showfmintabs: Bool = true
@@ -106,6 +108,9 @@ struct lara: App {
             .sheet(isPresented: $mgr.showLogs) {
                 LogsView(logger: globallogger)
             }
+            .sheet(isPresented: $iconThemeManager.showFixupSheet) {
+                IconThemeFixupView()
+            }
             .onAppear {
                 if g_isunsupported {
                     showunsupported = true
@@ -113,6 +118,7 @@ struct lara: App {
                 
                 init_offsets()
                 offsets_init()
+                iconThemeManager.startPendingFixupIfPossible()
             }
             .onChange(of: scenePhase) { phase in
                 if phase == .inactive || phase == .background {
@@ -136,10 +142,16 @@ struct lara: App {
                     globallogger.stopcapture()
                 } else if phase == .active {
                     globallogger.capture()
+                    iconThemeManager.startPendingFixupIfPossible()
+                }
+            }
+            .onChange(of: mgr.sbxready) { ready in
+                if ready {
+                    iconThemeManager.startPendingFixupIfPossible()
                 }
             }
             .alert(isPresented: $showunsupported) {
-                .init(title: Text("Unsupported"), message: Text("Lara is currently not supported on this device. Possible reasons:\nYour device is newer than iOS 26.0.1\nYour device is older than iOS 17.0\nYour device has MIE\n\nLara will probably not work."))
+                .init(title: Text("Unsupported"), message: Text("Lara is currently not supported on this device. Possible reasons:\nYour iOS is newer than iOS 26.0.1\nYour iOS is older than iOS 17.0\nYour device has MIE\nA debugger is attached\n\nLara will probably not work."))
             }
         }
     }
