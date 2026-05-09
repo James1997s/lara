@@ -11,148 +11,160 @@ import UniformTypeIdentifiers
 let g_isunsupported: Bool = isunsupported()
 
 extension UIDocumentPickerViewController {
-    @objc func fix_init(forOpeningContentTypes contentTypes: [UTType], asCopy: Bool) -> UIDocumentPickerViewController {
-        return fix_init(forOpeningContentTypes: contentTypes, asCopy: true)
+    @objc func fixinit(
+        forOpeningContentTypes contentTypes: [UTType],
+        asCopy: Bool
+    ) -> UIDocumentPickerViewController {
+        return fixinit(forOpeningContentTypes: contentTypes, asCopy: true)
     }
 }
 
 @main
 struct lara: App {
-    @ObservedObject private var mgr = laramgr.shared
-    @ObservedObject private var iconThemeManager = IconThemeManager.shared
-    @Environment(\.scenePhase) private var scenePhase
-    @State var showunsupported: Bool = false
-    @State var showt1szb: Bool = false
-    @State private var selectedtab: Int = 0
-    private let keepalivekey = "keepalive"
+    @StateObject private var mgr = laramgr.shared
+    @StateObject private var iconthememgr = IconThemeManager.shared
+    @Environment(\.scenePhase) private var scenephase
+    @State private var showunsupported = g_isunsupported
+    @State private var selectedtab = 0
     @AppStorage("showfmintabs") private var showfmintabs: Bool = true
     @AppStorage("selectedmethod") private var selectedmethod: method = .hybrid
 
+    private let kakay = "keepalive"
+
     init() {
-        // fix file picker
-        let fixMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, #selector(UIDocumentPickerViewController.fix_init(forOpeningContentTypes:asCopy:)))!
-        let origMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, #selector(UIDocumentPickerViewController.init(forOpeningContentTypes:asCopy:)))!
-        method_exchangeImplementations(origMethod, fixMethod)
+        swizzledocspicker()
+        setupka()
+
+        globallogger.capture()
         
-        if UserDefaults.standard.string(forKey: "selectedmethod") == nil {
-            UserDefaults.standard.set(method.hybrid.rawValue, forKey: "selectedmethod")
+        if g_isunsupported {
+            print("(lara) device may be unsupported")
+        } else {
+            print("(lara) device should be supported")
         }
-        
+    }
+
+    private func swizzledocspicker() {
+        let fixMethod = class_getInstanceMethod(
+            UIDocumentPickerViewController.self,
+            #selector(UIDocumentPickerViewController.fixinit(forOpeningContentTypes:asCopy:))
+        )!
+
+        let origMethod = class_getInstanceMethod(
+            UIDocumentPickerViewController.self,
+            #selector(UIDocumentPickerViewController.init(forOpeningContentTypes:asCopy:))
+        )!
+
+        method_exchangeImplementations(origMethod, fixMethod)
+    }
+
+    private func setupka() {
+        guard UserDefaults.standard.bool(forKey: kakay), !kaenabled else { return }
+        toggleka()
+    }
+
+    var body: some Scene {
+        WindowGroup {
+            maintabview
+                .overlay(respringoverlay)
+                .sheet(isPresented: $mgr.showLogs) {
+                    LogsView(logger: globallogger)
+                }
+                .sheet(isPresented: $iconthememgr.showFixupSheet) {
+                    IconThemeFixupView()
+                }
+                .onAppear(perform: onappear)
+                .onChange(of: scenephase, perform: handlescenphase)
+                .onChange(of: mgr.sbxready) { ready in
+                    if ready {
+                        iconthememgr.startPendingFixupIfPossible()
+                    }
+                }
+                .alert("Unsupported", isPresented: $showunsupported) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text("""
+                    Lara is currently not supported on this device.
+
+                    Possible reasons:
+                    - Unsupported iOS version
+                    - Device restrictions (MIE)
+                    - Debugger attached
+
+                    Lara will probably not work correctly.
+                    """)
+                }
+        }
+    }
+
+    private var maintabview: some View {
+        TabView(selection: $selectedtab) {
+            ContentView()
+                .tabItem { Image(systemName: "wrench.and.screwdriver.fill") }
+                .tag(0)
+
+            TweaksView(mgr: mgr)
+                .tabItem { Image(systemName: "ant.fill") }
+                .tag(1)
+
+            SantanderView(startPath: "/")
+                .tabItem { Image(systemName: "folder.fill") }
+                .tag(2)
+        }
+    }
+
+    private var respringoverlay: some View {
+        Group {
+            if mgr.showrespring {
+                respringview()
+                    .brightness(-1.0)
+                    .ignoresSafeArea()
+            }
+        }
+    }
+    
+    private func onappear() {
         if g_isunsupported {
             showunsupported = true
         }
-        
-        if UserDefaults.standard.bool(forKey: keepalivekey) {
-            if !kaenabled {
-                toggleka()
-            }
-        }
-        
-        if g_isunsupported {
-            print("device may be unsupported")
-        } else {
-            print("device should be supported")
-        }
-        
-        globallogger.capture()
+
+        init_offsets()
+        offsets_init()
+        iconthememgr.startPendingFixupIfPossible()
     }
 
-    // i want to figure out a way to have the logs button be in some permanant toolbar type situation. i haven't figured it out yet though.
-    var body: some Scene {
-        WindowGroup {
-            TabView(selection: $selectedtab) {
-                /*
-                SantanderView(startPath: "/")
-                    .tabItem {
-                        Image(systemName: "folder.fill")
-                    }
-                    .tag(0)
-                
-                ContentView()
-                    .tabItem {
-                        Image(systemName: "ant.fill")
-                    }
-                    .tag(1)
-                
-                LogsView(logger: globallogger)
-                    .tabItem {
-                        Image(systemName: "doc.text.fill")
-                    }
-                    .tag(2)
-                */
-                ContentView()
-                    .tabItem {
-                        Image(systemName: "wrench.and.screwdriver.fill")
-                    }
-                    .tag(0)
-                
-                TweaksView(mgr: mgr)
-                    .tabItem {
-                        Image(systemName: "ant.fill")
-                    }
-                    .tag(1)
-                
-                SantanderView(startPath: "/")
-                    .tabItem {
-                        Image(systemName: "folder.fill")
-                    }
-                    .tag(2)
-            }
-            .overlay {
-                if mgr.showrespring {
-                    respringview()
-                        .brightness(-1.0)
-                        .ignoresSafeArea()
-                }
-            }
-            .sheet(isPresented: $mgr.showLogs) {
-                LogsView(logger: globallogger)
-            }
-            .sheet(isPresented: $iconThemeManager.showFixupSheet) {
-                IconThemeFixupView()
-            }
-            .onAppear {
-                if g_isunsupported {
-                    showunsupported = true
-                }
-                
-                init_offsets()
-                offsets_init()
-                iconThemeManager.startPendingFixupIfPossible()
-            }
-            .onChange(of: scenePhase) { phase in
-                if phase == .inactive || phase == .background {
-                    if mgr.rcready {
-                        var bgTask: UIBackgroundTaskIdentifier = .invalid
-                        bgTask = UIApplication.shared.beginBackgroundTask(withName: "RemoteCallCleanup") {
-                            if bgTask != .invalid {
-                                UIApplication.shared.endBackgroundTask(bgTask)
-                                bgTask = .invalid
-                            }
-                        }
-                        
-                        mgr.rcdestroy {
-                            if bgTask != .invalid {
-                                UIApplication.shared.endBackgroundTask(bgTask)
-                                bgTask = .invalid
-                            }
-                        }
-                    }
-                    
-                    globallogger.stopcapture()
-                } else if phase == .active {
-                    globallogger.capture()
-                    iconThemeManager.startPendingFixupIfPossible()
-                }
-            }
-            .onChange(of: mgr.sbxready) { ready in
-                if ready {
-                    iconThemeManager.startPendingFixupIfPossible()
-                }
-            }
-            .alert(isPresented: $showunsupported) {
-                .init(title: Text("Unsupported"), message: Text("Lara is currently not supported on this device. Possible reasons:\nYour iOS is newer than iOS 26.0.1\nYour iOS is older than iOS 17.0\nYour device has MIE\nA debugger is attached\n\nLara will probably not work."))
-            }
+    private func handlescenphase(_ phase: ScenePhase) {
+        switch phase {
+        case .inactive, .background:
+            handlebg()
+            globallogger.stopcapture()
+
+        case .active:
+            globallogger.capture()
+            iconthememgr.startPendingFixupIfPossible()
+
+        @unknown default:
+            break
         }
+    }
+
+    private func handlebg() {
+        guard mgr.rcready else { return }
+
+        var bgTask: UIBackgroundTaskIdentifier = .invalid
+
+        bgTask = UIApplication.shared.beginBackgroundTask(withName: "RemoteCallCleanup") {
+            endbgtask(&bgTask)
+        }
+
+        mgr.rcdestroy {
+            self.endbgtask(&bgTask)
+        }
+    }
+
+    private func endbgtask(_ task: inout UIBackgroundTaskIdentifier) {
+        guard task != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(task)
+        task = .invalid
     }
 }
