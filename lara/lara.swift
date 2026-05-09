@@ -8,36 +8,35 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-enum TabOptions {
+enum taboptions {
     case applying, tweaks, files, logs
 }
 
 let g_isunsupported: Bool = isunsupported()
-var weOnADebugBuild: Bool = false
+var weonadebugbuild_pjbweouttahereexclamationmark: Bool = false
 
 @main
 struct lara: App {
     @StateObject private var mgr = laramgr.shared
-    @StateObject private var iconThemeMgr = IconThemeManager.shared
+    @StateObject private var iconthememgr = IconThemeManager.shared
+    @Environment(\.scenePhase) var scenephase
     @AppStorage("selectedMethod") private var selectedMethod: method = .hybrid
-    @Environment(\.scenePhase) var scenePhase
-    // connect new key to settings
-    @AppStorage("keepAlive") private var keepAlive: Bool = false
-    @AppStorage("showFMInTabs") private var showFMInTabs: Bool = true
-    @AppStorage("showLogsInTabs") private var showLogsInTabs: Bool = false
-    
-    @State private var selectedTab: TabOptions = .applying
+    @AppStorage("keepAlive") private var keepalive: Bool = false
+    @AppStorage("showFMInTabs") private var showfmintabs: Bool = true
+    @AppStorage("logsdisplaymode") private var logsdisplaymode: logsdisplaymode = .toolbar
+    @State private var selectedtab: taboptions = .applying
     
     init() {
         #if DEBUG
-        weOnADebugBuild = true
+        weonadebugbuild_pjbweouttahereexclamationmark = true
         #endif
+        
         // fix file picker
         let fixMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, #selector(UIDocumentPickerViewController.fix_init(forOpeningContentTypes:asCopy:)))!
         let origMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, #selector(UIDocumentPickerViewController.init(forOpeningContentTypes:asCopy:)))!
         method_exchangeImplementations(origMethod, fixMethod)
         
-        if keepAlive {
+        if keepalive {
             toggleka()
         }
         
@@ -46,37 +45,37 @@ struct lara: App {
     
     var body: some Scene {
         WindowGroup {
-            TabView(selection: $selectedTab) {
+            TabView(selection: $selectedtab) {
                 ContentView()
                     .tabItem {
                         Image(systemName: "wrench.and.screwdriver.fill")
                     }
-                    .tag(TabOptions.applying)
+                    .tag(taboptions.applying)
                 
                 // this has gotta fucking go
                 TweaksView(mgr: mgr)
                     .tabItem {
                         Image(systemName: "ant.fill")
                     }
-                    .tag(TabOptions.tweaks)
+                    .tag(taboptions.tweaks)
                 
                 
                 // i'm gonna strangle you root (the weight of your actions will crush you)
-                if showFMInTabs {
+                if showfmintabs {
                     SantanderView(startPath: "/")
                         .tabItem {
                             Image(systemName: "folder.fill")
                         }
-                        .tag(TabOptions.files)
+                        .tag(taboptions.files)
                 }
                 
                 // this too
-                if showLogsInTabs {
+                if logsdisplaymode == .tabs {
                     LogsView(logger: globallogger)
                         .tabItem {
                             Image(systemName: "terminal")
                         }
-                        .tag(TabOptions.logs)
+                        .tag(taboptions.logs)
                 }
             }
             .environmentObject(mgr)
@@ -87,27 +86,31 @@ struct lara: App {
                         .ignoresSafeArea()
                 }
             }
-            .sheet(isPresented: $mgr.showLogs) {
+            .sheet(isPresented: Binding(
+                get: { logsdisplaymode == .toolbar && mgr.showLogs },
+                set: { mgr.showLogs = $0 }
+            )) {
                 LogsView(logger: globallogger)
             }
-            .sheet(isPresented: $iconThemeMgr.showFixupSheet) {
+            .sheet(isPresented: $iconthememgr.showFixupSheet) {
                 IconThemeFixupView()
             }
             .onAppear {
                 if !isunsupported() {
                     init_offsets()
                     offsets_init()
-                    iconThemeMgr.startPendingFixupIfPossible()
+                    iconthememgr.startPendingFixupIfPossible()
                     // beautiful name root
+                    // thanks
                     mgr.hasOffsets = emergencyfixfunctiontobereplacedlateronquestionmark()
                 } else {
-                    Alertinator.shared.alert(title: "This device is not supported!", body: "We apologize, but this device is not supported by lara and never will be. lara only supports iOS 16.0 - iOS 18.7.1, and iOS 26.0 - iOS 26.0.1. This error could also be caused by a debugger being attached.", actionLabel: "Exit App", action: { exitinator() })
+                    Alertinator.shared.alert(title: "This device is not supported!", body: "We apologize, but this device is currently not supported by Lara. Possible reasons: \n- You are on an unsupported iOS version (Supported: iOS 16.0 - iOS 18.7.1, iOS 26.0 - iOS 26.0.1) \n- Your device has MIE (A19+ or M5+) \n- A debugger is attached.", actionLabel: "Exit App", action: { exitinator() })
                 }
             }
-            .onChange(of: scenePhase, perform: handleScenePhase)
+            .onChange(of: scenephase, perform: handleScenePhase)
             .onChange(of: mgr.sbxready) { ready in
                 if ready {
-                    iconThemeMgr.startPendingFixupIfPossible()
+                    iconthememgr.startPendingFixupIfPossible()
                 }
             }
         }
@@ -121,7 +124,7 @@ struct lara: App {
 
         case .active:
             globallogger.capture()
-            iconThemeMgr.startPendingFixupIfPossible()
+            iconthememgr.startPendingFixupIfPossible()
 
         @unknown default:
             break

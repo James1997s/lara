@@ -61,29 +61,31 @@ public struct LinkCreditIcon: View {
             AsyncImage(url: URL(string: url)) { image in
                 image
                     .resizable()
-                    .scaledToFit()
+                    .scaledToFill()
+                    .frame(width: 40, height: 40)
                     .background(Color(.systemGray6))
-                    .clipShape(.capsule)
-                    .glassEffect(.regular, in: .capsule)
+                    .clipShape(Circle())
+                    .glassEffect(.regular, in: Circle())
             } placeholder: {
                 ProgressView()
+                    .frame(width: 40, height: 40)
             }
-            .frame(width: 40, height: 40)
         } else {
             AsyncImage(url: URL(string: url)) { image in
                 image
                     .resizable()
-                    .scaledToFit()
+                    .scaledToFill()
+                    .frame(width: 40, height: 40)
                     .background(Color(.systemGray6))
-                    .clipShape(.rect(cornerRadius: 12))
+                    .clipShape(Circle())
                     .overlay {
-                        RoundedRectangle(cornerRadius: 12)
+                        Circle()
                             .stroke(Color.primary.opacity(0.2), lineWidth: 1)
                     }
             } placeholder: {
                 ProgressView()
+                    .frame(width: 40, height: 40)
             }
-            .frame(width: 40, height: 40)
         }
     }
 }

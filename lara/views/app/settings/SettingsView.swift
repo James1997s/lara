@@ -21,7 +21,7 @@ struct SettingsView: View {
     @State private var importingKcache: Bool = false
     @State private var showKcacheTips: Bool = false
     
-    @AppStorage("showLogsInTabs") private var showLogsInTabs: Bool = false
+    @AppStorage("logsdisplaymode") private var selectedLogsDisplayMode: logsdisplaymode = .toolbar
     @AppStorage("loggerNoBS") private var loggerNoBS: Bool = true
     
     @AppStorage("showFMInTabs") private var showFMInTabs: Bool = true
@@ -33,9 +33,8 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section(header: HeaderLabel(text: "About", icon: "info")) {
+                Section(header: HeaderLabel(text: "About", icon: "info.circle")) {
                     AppInfoCell()
-                    // this will lead to a settings view
                     NavigationLink("Credits", destination: CreditsView())
                 }
                 
@@ -149,7 +148,12 @@ struct SettingsView: View {
                             }
                         }
                     Toggle("Disable Log Dividers", isOn: $loggerNoBS)
-                    Toggle("Show Logs in Tabs", isOn: $showLogsInTabs)
+                    Picker("Logs Display", selection: $selectedLogsDisplayMode) {
+                        ForEach(logsdisplaymode.allCases, id: \.self) { mode in
+                            Text(mode.rawValue).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.menu)
                 }
                 
                 Section(header: HeaderLabel(text: "File Manager", icon: "folder"), footer: Text("Display Mode lets you change the way app folders get displayed in the file manager.")) {
@@ -1066,4 +1070,10 @@ enum fmAppsDisplayMode: String, CaseIterable {
     case UUID = "UUID"
     case bundleID = "Bundle ID"
     case appName = "App Name"
+}
+
+enum logsdisplaymode: String, CaseIterable {
+    case tabs = "In Tabs"
+    case toolbar = "In Toolbar"
+    case content = "Directly in ContentView"
 }

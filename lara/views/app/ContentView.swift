@@ -10,7 +10,10 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     @EnvironmentObject private var mgr: laramgr
-    @AppStorage("selectedMethod") private var selectedMethod: method = .hybrid
+    @ObservedObject private var logger = globallogger
+    @AppStorage("selectedMethod") private var selectedmethod: method = .hybrid
+    @AppStorage("logsdisplaymode") private var selectedlogsdisplaymode: logsdisplaymode = .toolbar
+    @AppStorage("loggerNoBS") private var loggernobs: Bool = true
     
     @State private var showSettings: Bool = false
     
@@ -26,13 +29,16 @@ struct ContentView: View {
                 RCSection
                 ActionsSection
                 DebugSection
+                InlineLogsSection
             }
             .navigationTitle("lara")
             .toolbar {
-                Button(action: {
-                    mgr.showLogs.toggle()
-                }) {
-                    Image(systemName: "terminal")
+                if selectedlogsdisplaymode == .toolbar {
+                    Button(action: {
+                        mgr.showLogs.toggle()
+                    }) {
+                        Image(systemName: "terminal")
+                    }
                 }
                 Button(action: {
                     showSettings.toggle()
@@ -58,7 +64,7 @@ struct ContentView: View {
     }
     
     private var KRWSection: some View {
-        Section(header: HeaderLabel(text: "Kernel Read Write", icon: "externaldrive"), footer: Text(isdebugged() ? "Not available while a debugger is attached." : "To use tweaks, please click these buttons. Depending on your device configuration, this may not function properly.")) {
+        Section {
             // run exploit
             LabeledContent(content: {
                 if mgr.dsready {
@@ -80,7 +86,7 @@ struct ContentView: View {
             }
             
             // hybrid button
-            if selectedMethod == .hybrid {
+            if selectedmethod == .hybrid {
                 LabeledContent(content: {
                     if mgr.vfsready && mgr.sbxready {
                         Image(systemName: "checkmark.circle")
@@ -102,7 +108,7 @@ struct ContentView: View {
             }
             
             // initalize vfs
-            if selectedMethod == .vfs {
+            if selectedmethod == .vfs {
                 LabeledContent(content: {
                     if mgr.vfsready {
                         Image(systemName: "checkmark.circle")
@@ -123,7 +129,7 @@ struct ContentView: View {
             }
             
             // escape sandbox
-            if selectedMethod == .sbx {
+            if selectedmethod == .sbx {
                 LabeledContent(content: {
                     if mgr.sbxready {
                         Image(systemName: "checkmark.circle")
@@ -141,6 +147,12 @@ struct ContentView: View {
                     })
                     .disabled(!mgr.dsready || mgr.sbxready || mgr.sbxrunning || isdebugged())
                 }
+            }
+        } header: {
+            HeaderLabel(text: "Kernel Read Write", icon: "externaldrive")
+        } footer: {
+            if isdebugged() {
+                Text("Not available while a debugger is attached.")
             }
         }
     }
@@ -174,7 +186,7 @@ struct ContentView: View {
                             }
                         }
                     })
-                    .disabled(!mgr.dsready || isdebugged())
+                    .disabled(!mgr.dsready || isdebugged() || mgr.rcrunning || mgr.rcready)
                 }
                 
                 // destroy remotecall
@@ -196,7 +208,7 @@ struct ContentView: View {
                 if isdebugged() {
                     Text("Not available when a debugger is attached.")
                 }
-                Text("This allows for injection into various processes, allowing for extensive customization. RemoteCall is relatively unstable and may not work properly.")
+                Text("RemoteCall is relatively unstable and may not work properly.")
             }
             #endif
         }
@@ -222,9 +234,9 @@ struct ContentView: View {
     
     private var DebugSection: some View {
         Group {
-            if weOnADebugBuild {
-                Section(header: HeaderLabel(text: "Debug Only", icon: "ant")) {
-                    if mgr.dsready {
+            if weonadebugbuild_pjbweouttahereexclamationmark {
+                if mgr.dsready {
+                    Section(header: HeaderLabel(text: "Debug Only", icon: "ant")) {
                         LabeledContent("kernel_base") {
                             Text(String(format: "0x%llx", mgr.kernbase))
                                 .font(.system(.body, design: .monospaced))
@@ -240,19 +252,57 @@ struct ContentView: View {
             }
         }
     }
+
+    @ViewBuilder
+    private var InlineLogsSection: some View {
+        if selectedlogsdisplaymode == .content {
+            Section {
+                ScrollView {
+                    if loggernobs {
+                        let combined = logger.logs.joined(separator: "\n")
+                        Text(combined)
+                            .font(.system(size: 13, design: .monospaced))
+                            .lineSpacing(1)
+                            .textSelection(.enabled)
+                            .onTapGesture {
+                                UIPasteboard.general.string = combined
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            }
+                    } else {
+                        ForEach(Array(logger.logs.enumerated()), id: \.offset) { _, log in
+                            Text(log)
+                                .font(.system(size: 13, design: .monospaced))
+                                .lineSpacing(1)
+                                .textSelection(.enabled)
+                                .onTapGesture {
+                                    UIPasteboard.general.string = log
+                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                }
+                        }
+                    }
+                }
+                .frame(height: 250)
+                
+                Button("Copy All") {
+                    UIPasteboard.general.string = logger.logs.joined(separator: "\n\n")
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                }
+                
+                Button("Clear") {
+                    logger.clear()
+                }
+                .foregroundColor(.red)
+            } header: {
+                HeaderLabel(text: "Logs", icon: "terminal")
+            }
+        }
+    }
 }
 
 #Preview {
     ContentView()
         .environmentObject(laramgr())
 }
-
-//
-//  ContentView.swift
-//  lara
-//
-//  Created by ruter on 23.03.26.
-//
 
 struct FortFaggotView: View {
     @AppStorage("showfmintabs") private var showfmintabs: Bool = true
