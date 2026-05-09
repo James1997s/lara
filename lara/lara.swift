@@ -8,132 +8,112 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-let g_isunsupported: Bool = isunsupported()
-
-extension UIDocumentPickerViewController {
-    @objc func fixinit(
-        forOpeningContentTypes contentTypes: [UTType],
-        asCopy: Bool
-    ) -> UIDocumentPickerViewController {
-        return fixinit(forOpeningContentTypes: contentTypes, asCopy: true)
-    }
+enum TabOptions {
+    case applying, tweaks, files, logs
 }
+
+let g_isunsupported: Bool = isunsupported()
+var weOnADebugBuild: Bool = false
 
 @main
 struct lara: App {
     @StateObject private var mgr = laramgr.shared
-    @StateObject private var iconthememgr = IconThemeManager.shared
-    @Environment(\.scenePhase) private var scenephase
-    @State private var showunsupported = g_isunsupported
-    @State private var selectedtab = 0
-    @AppStorage("showfmintabs") private var showfmintabs: Bool = true
-    @AppStorage("selectedmethod") private var selectedmethod: method = .hybrid
-
-    private let kakay = "keepalive"
-
+    @StateObject private var iconThemeMgr = IconThemeManager.shared
+    @AppStorage("selectedMethod") private var selectedMethod: method = .hybrid
+    @Environment(\.scenePhase) var scenePhase
+    // connect new key to settings
+    @AppStorage("keepAlive") private var keepAlive: Bool = false
+    @AppStorage("showFMInTabs") private var showFMInTabs: Bool = true
+    @AppStorage("showLogsInTabs") private var showLogsInTabs: Bool = false
+    
+    @State private var selectedTab: TabOptions = .applying
+    
     init() {
-        swizzledocspicker()
-        setupka()
-
-        globallogger.capture()
-        
-        if g_isunsupported {
-            print("(lara) device may be unsupported")
-        } else {
-            print("(lara) device should be supported")
-        }
-    }
-
-    private func swizzledocspicker() {
-        let fixMethod = class_getInstanceMethod(
-            UIDocumentPickerViewController.self,
-            #selector(UIDocumentPickerViewController.fixinit(forOpeningContentTypes:asCopy:))
-        )!
-
-        let origMethod = class_getInstanceMethod(
-            UIDocumentPickerViewController.self,
-            #selector(UIDocumentPickerViewController.init(forOpeningContentTypes:asCopy:))
-        )!
-
+        #if DEBUG
+        weOnADebugBuild = true
+        #endif
+        // fix file picker
+        let fixMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, #selector(UIDocumentPickerViewController.fix_init(forOpeningContentTypes:asCopy:)))!
+        let origMethod = class_getInstanceMethod(UIDocumentPickerViewController.self, #selector(UIDocumentPickerViewController.init(forOpeningContentTypes:asCopy:)))!
         method_exchangeImplementations(origMethod, fixMethod)
+        
+        if keepAlive {
+            toggleka()
+        }
+        
+        globallogger.capture()
     }
-
-    private func setupka() {
-        guard UserDefaults.standard.bool(forKey: kakay), !kaenabled else { return }
-        toggleka()
-    }
-
+    
     var body: some Scene {
         WindowGroup {
-            maintabview
-                .overlay(respringoverlay)
-                .sheet(isPresented: $mgr.showLogs) {
-                    LogsView(logger: globallogger)
-                }
-                .sheet(isPresented: $iconthememgr.showFixupSheet) {
-                    IconThemeFixupView()
-                }
-                .onAppear(perform: onappear)
-                .onChange(of: scenephase, perform: handlescenphase)
-                .onChange(of: mgr.sbxready) { ready in
-                    if ready {
-                        iconthememgr.startPendingFixupIfPossible()
+            TabView(selection: $selectedTab) {
+                ContentView()
+                    .tabItem {
+                        Image(systemName: "wrench.and.screwdriver.fill")
                     }
+                    .tag(TabOptions.applying)
+                
+                // this has gotta fucking go
+                TweaksView(mgr: mgr)
+                    .tabItem {
+                        Image(systemName: "ant.fill")
+                    }
+                    .tag(TabOptions.tweaks)
+                
+                
+                // i'm gonna strangle you root (the weight of your actions will crush you)
+                if showFMInTabs {
+                    SantanderView(startPath: "/")
+                        .tabItem {
+                            Image(systemName: "folder.fill")
+                        }
+                        .tag(TabOptions.files)
                 }
-                .alert("Unsupported", isPresented: $showunsupported) {
-                    Button("OK", role: .cancel) {}
-                } message: {
-                    Text("""
-                    Lara is currently not supported on this device.
-
-                    Possible reasons:
-                    - Unsupported iOS version
-                    - Device restrictions (MIE)
-                    - Debugger attached
-
-                    Lara will probably not work correctly.
-                    """)
+                
+                // this too
+                if showLogsInTabs {
+                    LogsView(logger: globallogger)
+                        .tabItem {
+                            Image(systemName: "terminal")
+                        }
+                        .tag(TabOptions.logs)
                 }
-        }
-    }
-
-    private var maintabview: some View {
-        TabView(selection: $selectedtab) {
-            ContentView()
-                .tabItem { Image(systemName: "wrench.and.screwdriver.fill") }
-                .tag(0)
-
-            TweaksView(mgr: mgr)
-                .tabItem { Image(systemName: "ant.fill") }
-                .tag(1)
-
-            SantanderView(startPath: "/")
-                .tabItem { Image(systemName: "folder.fill") }
-                .tag(2)
-        }
-    }
-
-    private var respringoverlay: some View {
-        Group {
-            if mgr.showrespring {
-                respringview()
-                    .brightness(-1.0)
-                    .ignoresSafeArea()
+            }
+            .environmentObject(mgr)
+            .overlay {
+                if mgr.showrespring {
+                    respringview()
+                        .brightness(-1.0)
+                        .ignoresSafeArea()
+                }
+            }
+            .sheet(isPresented: $mgr.showLogs) {
+                LogsView(logger: globallogger)
+            }
+            .sheet(isPresented: $iconThemeMgr.showFixupSheet) {
+                IconThemeFixupView()
+            }
+            .onAppear {
+                if !isunsupported() {
+                    init_offsets()
+                    offsets_init()
+                    iconThemeMgr.startPendingFixupIfPossible()
+                    // beautiful name root
+                    mgr.hasOffsets = emergencyfixfunctiontobereplacedlateronquestionmark()
+                } else {
+                    Alertinator.shared.alert(title: "This device is not supported!", body: "We apologize, but this device is not supported by lara and never will be. lara only supports iOS 16.0 - iOS 18.7.1, and iOS 26.0 - iOS 26.0.1. This error could also be caused by a debugger being attached.", actionLabel: "Exit App", action: { exitinator() })
+                }
+            }
+            .onChange(of: scenePhase, perform: handleScenePhase)
+            .onChange(of: mgr.sbxready) { ready in
+                if ready {
+                    iconThemeMgr.startPendingFixupIfPossible()
+                }
             }
         }
     }
     
-    private func onappear() {
-        if g_isunsupported {
-            showunsupported = true
-        }
-
-        init_offsets()
-        offsets_init()
-        iconthememgr.startPendingFixupIfPossible()
-    }
-
-    private func handlescenphase(_ phase: ScenePhase) {
+    private func handleScenePhase(_ phase: ScenePhase) {
         switch phase {
         case .inactive, .background:
             handlebg()
@@ -141,7 +121,7 @@ struct lara: App {
 
         case .active:
             globallogger.capture()
-            iconthememgr.startPendingFixupIfPossible()
+            iconThemeMgr.startPendingFixupIfPossible()
 
         @unknown default:
             break
@@ -166,5 +146,12 @@ struct lara: App {
         guard task != .invalid else { return }
         UIApplication.shared.endBackgroundTask(task)
         task = .invalid
+    }
+}
+
+// file picker fixes
+extension UIDocumentPickerViewController {
+    @objc func fix_init(forOpeningContentTypes contentTypes: [UTType], asCopy: Bool) -> UIDocumentPickerViewController {
+        return fix_init(forOpeningContentTypes: contentTypes, asCopy: true)
     }
 }
