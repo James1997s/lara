@@ -89,13 +89,6 @@ Important Notes:
 - remotecall is super bugged and may not work properly.
 
 ### Fixes
-#### about the kernelcache
-lara needs the **kernelcache** (the iOS kernel binary from your exact iOS version + device) to run. on first launch it runs a patchfinder ([opa334's XPF](https://github.com/opa334/ChOma) via libgrabkernel2) against the kernelcache to locate the kernel symbols and struct offsets the exploit touches — `kernproc`, `rootvnode`, `proc` size, etc. these move on every iOS release and every SoC, so lara can't ship them hardcoded.
-
-the app tries to download the kernelcache for you automatically (the **Download Kernelcache** button in Settings hits Apple's IPSW servers). when that fails — usually a network/CDN hiccup or an unusual device/build combo — grab one manually with the steps below and import it via **Import Kernelcache from Files**.
-
-if things get weird later, **Delete Kernelcache Data** in Settings wipes the cached kernelcache and the saved offsets, and you start over. that's what the "delete and redownload" line in [tips](#tips) is about.
-
 **kernelcache download fix (manual fallback):**
 
 1. Download the IPSW tool for your device [here](https://github.com/blacktop/ipsw/releases/tag/v3.1.671).
