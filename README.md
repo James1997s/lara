@@ -38,18 +38,20 @@
 >Lara is still in a super rough state and is undergoing a rewrite. If you are experiencing any issues, it is best to simply wait instead of opening issues or asking for support in the Discord. If you would like to contribute, it is best to wait after the rewrite. We will not be accepting PRs during this time or resolving/responding to any issues. Thank you for your understanding!
 
 ## Support
-| OS Version | Support Status |
+| iOS Version | Support Status |
 | - | - |
-| iOS 16.0 - iOS 17.0.x | Untested |
-| iOS 17.1 - iOS 18.7.1 | Supported |
-| iOS 18.7.2 - iOS 18.7.x | Not Supported |
+| iOS 16.x |  Not Supported ¹ |
+| iOS 17.0 - iOS 18.7.1 | Supported |
+| iOS 18.7.2+ | Not Supported |
 | iOS 26.0 - iOS 26.0.1 | Supported |
 | iOS 26.1+ | Not Supported |
 
+¹ While *technically* affected by the exploit lara abuses, offsets havent been found for these versions and lara therefore doesnt support them.
+
 Important Notes:
-- This tool does **not** work on M5 or A19 (Pro) devices regardless of iOS version. This is due to MTE.
-- On M-series CPUs, YMMV. If you are on an M-series device, go to lara settings, scroll down set `t1sz_boot` to `0x11`.
-- Issues involving lara not working on either unsupported or *techincally* supported versions will be closed immediately.
+- This tool does **not** work on M5 or A19 (Pro) devices regardless of iOS version because of MIE.
+- YMMV on M-series CPUs. If you are on an M-series device, try going to lara settings, selecting `Modify Offsets`, and setting `t1sz_boot` to `0x11`.
+- Issues involving lara not working on either unsupported or *technically* supported versions will be closed immediately.
 
 <p align="center">
   <a href="https://celloserenity.github.io/altdirect/?url=https://raw.githubusercontent.com/rooootdev/lara/refs/heads/main/source.json" target="_blank">
